@@ -15,10 +15,10 @@ Item {
     property string lyricText: backend?.currentLyric || "No Lyrics"
 
     // Settings
-    property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 300
-    property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 50
+    property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
+    property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
-    property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 14
+    property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
 
     // Visual Properties
     property bool hovered: false
