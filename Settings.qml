@@ -8,10 +8,10 @@ ColumnLayout {
     property var pluginApi: null
 
     // Load settings
-    property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 300
-    property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 50
+    property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
+    property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
-    property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 14
+    property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
 
     spacing: Style.marginM
 
