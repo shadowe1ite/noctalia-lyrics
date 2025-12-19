@@ -7,25 +7,13 @@ ColumnLayout {
     id: root
     property var pluginApi: null
 
-    // Local Draft Properties
-    property int draftWidth: 300
-    property int draftSpeed: 50
-    property string draftMode: "always"
+    property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 300
+    property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 50
+    property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
 
     spacing: Style.marginM
 
-    // Load actual settings into drafts when loaded
-    Component.onCompleted: {
-        if (pluginApi) {
-            draftWidth = pluginApi.pluginSettings.widgetWidth ?? 300;
-            draftSpeed = pluginApi.pluginSettings.scrollSpeed ?? 50;
-            draftMode = pluginApi.pluginSettings.scrollMode ?? "always";
-        }
-    }
-
-    // External Apply Function
-    // Called by the main Settings Window OR our custom overlay
-    function apply() {
+    function saveSettings() {
         if (pluginApi) {
             pluginApi.pluginSettings.widgetWidth = draftWidth;
             pluginApi.pluginSettings.scrollSpeed = draftSpeed;
@@ -93,8 +81,4 @@ ColumnLayout {
         currentKey: draftMode
         onSelected: key => draftMode = key
     }
-
-    Item {
-        Layout.fillHeight: true
-    } // Spacer
 }
