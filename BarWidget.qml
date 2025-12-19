@@ -19,6 +19,10 @@ Item {
     property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
     property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
+    property bool hideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? false
+
+    // Visibility Logic
+    visible: !hideWhenEmpty || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
 
     // Visual Properties
     property bool hovered: false
@@ -157,7 +161,7 @@ Item {
     component ScrollingText: Item {
         id: scrollText
         property string text
-        property string _displayedText: "" // Internal text for smooth updates
+        property string _displayedText: ""
         property color textColor
         property real fontSize
         property string fontFamily
@@ -167,29 +171,23 @@ Item {
 
         implicitHeight: titleText.height
         clip: true
-        opacity: 1.0 // Start fully visible
+        opacity: 1.0
 
         property bool isScrolling: false
         property bool isResetting: false
 
-        // Handle Text Changes Smoothly
         onTextChanged: {
-            // First run: set immediately
             if (_displayedText === "") {
                 _displayedText = text;
                 if (needsScroll && mode === "always")
                     scrollTimer.restart();
                 return;
             }
-            // Subsequent changes: Animate
             transitionAnim.restart();
         }
 
-        // Transition Animation
         SequentialAnimation {
             id: transitionAnim
-
-            // 1. Fade Out (Fast)
             NumberAnimation {
                 target: scrollText
                 property: "opacity"
@@ -197,8 +195,6 @@ Item {
                 duration: 150
                 easing.type: Easing.OutQuad
             }
-
-            // 2. Update Text & Reset Scroll Position
             ScriptAction {
                 script: {
                     scrollText._displayedText = scrollText.text;
@@ -207,8 +203,6 @@ Item {
                     scrollContainer.scrollX = 0;
                 }
             }
-
-            // 3. Fade In (Fast)
             NumberAnimation {
                 target: scrollText
                 property: "opacity"
@@ -216,8 +210,6 @@ Item {
                 duration: 200
                 easing.type: Easing.InQuad
             }
-
-            // 4. Restart Scrolling if needed
             ScriptAction {
                 script: {
                     if (scrollText.needsScroll && scrollText.mode === "always") {
@@ -248,7 +240,6 @@ Item {
                         isScrolling = false;
                         isResetting = true;
                     } else {
-                        // Only restart if we aren't currently transitioning
                         if (!transitionAnim.running)
                             scrollTimer.restart();
                     }
@@ -281,7 +272,6 @@ Item {
 
                 NText {
                     id: titleText
-                    // Bind to the internal displayed text, not the raw input
                     text: scrollText._displayedText
                     color: textColor
                     pointSize: fontSize
@@ -291,7 +281,6 @@ Item {
                 }
 
                 NText {
-                    // Bind to the internal displayed text
                     text: scrollText._displayedText
                     color: textColor
                     pointSize: fontSize

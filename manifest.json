@@ -1,7 +1,7 @@
 {
   "id": "lyrics",
   "name": "Lyrics",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minNoctaliaVersion": "3.6.0",
   "author": "User",
   "license": "GPLv3",
@@ -18,7 +18,9 @@
     "defaultSettings": {
       "widgetWidth": 300,
       "scrollSpeed": 50,
-      "scrollMode": "always"
+      "fontSize": 9,
+      "scrollMode": "always",
+      "hideWhenEmpty": false
     }
   }
 }

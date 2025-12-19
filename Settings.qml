@@ -7,11 +7,11 @@ ColumnLayout {
     id: root
     property var pluginApi: null
 
-    // Load settings
     property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
     property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
     property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
+    property bool draftHideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? false
 
     spacing: Style.marginM
 
@@ -20,15 +20,12 @@ ColumnLayout {
             pluginApi.pluginSettings.widgetWidth = draftWidth;
             pluginApi.pluginSettings.scrollSpeed = draftSpeed;
             pluginApi.pluginSettings.scrollMode = draftMode;
-
-            // Only saving Font Size now
             pluginApi.pluginSettings.fontSize = draftFontSize;
-
+            pluginApi.pluginSettings.hideWhenEmpty = draftHideWhenEmpty;
             pluginApi.saveSettings();
         }
     }
 
-    // --- Font Size ---
     NLabel {
         label: "Font Size"
         description: "Text size in points."
@@ -52,7 +49,6 @@ ColumnLayout {
         Layout.fillWidth: true
     }
 
-    // --- Widget Width ---
     NLabel {
         label: "Widget Width"
     }
@@ -70,7 +66,6 @@ ColumnLayout {
         }
     }
 
-    // --- Scroll Speed ---
     NLabel {
         label: "Scroll Speed"
     }
@@ -88,7 +83,6 @@ ColumnLayout {
         }
     }
 
-    // --- Scroll Mode ---
     NComboBox {
         label: "Scroll Mode"
         Layout.fillWidth: true
@@ -108,5 +102,13 @@ ColumnLayout {
         ]
         currentKey: draftMode
         onSelected: key => draftMode = key
+    }
+
+    NToggle {
+        label: "Hide when empty"
+        checked: draftHideWhenEmpty
+        onToggled: newState => {
+            draftHideWhenEmpty = newState;
+        }
     }
 }
