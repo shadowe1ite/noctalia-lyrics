@@ -10,7 +10,7 @@ ColumnLayout {
     property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
     property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
-    property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
+    property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 10
     property bool draftHideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? true
 
     spacing: Style.marginM

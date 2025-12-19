@@ -18,7 +18,7 @@
     "defaultSettings": {
       "widgetWidth": 300,
       "scrollSpeed": 50,
-      "fontSize": 9,
+      "fontSize": 10,
       "scrollMode": "always",
       "hideWhenEmpty": true
     }

@@ -17,7 +17,7 @@ Item {
     property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
     property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
-    property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
+    property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 10
     property bool hideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? true
 
     visible: !hideWhenEmpty || isPlaying || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
