@@ -11,7 +11,7 @@ Item {
 
     property var pluginApi: null
     property var backend: pluginApi?.mainInstance
-    property string lyricText: backend?.currentLyric || "No Lyrics"
+    property string lyricText: backend?.currentLyric || ""
     property bool isPlaying: backend?.isPlaying ?? false
 
     property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215

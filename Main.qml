@@ -7,13 +7,26 @@ Item {
     id: root
 
     property var pluginApi: null
-    property string currentLyric: "No Lyrics"
+    property string currentLyric: "No lyrics"
     property string lastLyric: ""
     property bool isPlaying: false
     property bool isKnownMusic: false
     property string lastTitle: ""
     property string lastPlayer: ""
     property bool manualRestart: false
+    property bool isLoading: false
+
+    Timer {
+        id: loadTimer
+        interval: 5000
+        repeat: false
+        onTriggered: {
+            root.isLoading = false;
+            if (root.isPlaying) {
+                root.currentLyric = "Lyrics not found 🥲";
+            }
+        }
+    }
 
     Process {
         id: sptlrxProc
@@ -25,6 +38,8 @@ Item {
                 const cleanText = data.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "").trim();
 
                 if (cleanText !== "") {
+                    loadTimer.stop();
+                    root.isLoading = false;
                     root.isKnownMusic = true;
                     root.lastLyric = cleanText;
 
@@ -36,7 +51,6 @@ Item {
         }
 
         onExited: (code, status) => {
-            // Immediate restart if we triggered it manually (player change)
             if (root.manualRestart) {
                 root.manualRestart = false;
                 sptlrxProc.running = true;
@@ -55,7 +69,6 @@ Item {
 
     Process {
         id: statusProc
-        // Added playerName to the check
         command: ["playerctl", "metadata", "--format", "{{ playerName }}:::{{ status }}:::{{ xesam:artist }}:::{{ xesam:title }}", "-F"]
         running: true
 
@@ -67,7 +80,14 @@ Item {
                 const artist = parts[2] || "";
                 const title = parts[3] || "";
 
-                // Restart lyrics process if player changed
+                if (status === "" || status === "Stopped") {
+                    root.isPlaying = false;
+                    root.isLoading = false;
+                    loadTimer.stop();
+                    root.currentLyric = "No lyrics";
+                    return;
+                }
+
                 if (root.lastPlayer !== "" && root.lastPlayer !== playerName) {
                     root.manualRestart = true;
                     sptlrxProc.running = false;
@@ -78,17 +98,27 @@ Item {
                     root.lastTitle = title;
                     root.isKnownMusic = (artist.trim() !== "");
                     root.lastLyric = "";
+
+                    root.isLoading = true;
+                    root.currentLyric = "Wait Loading 🪿";
+                    loadTimer.restart();
                 }
 
                 if (status === "Playing") {
                     root.isPlaying = true;
-                    if (root.isKnownMusic && root.lastLyric !== "") {
-                        root.currentLyric = root.lastLyric;
-                    } else {
-                        root.currentLyric = "No lyrics";
+
+                    if (!root.isLoading) {
+                        if (root.isKnownMusic && root.lastLyric !== "") {
+                            root.currentLyric = root.lastLyric;
+                        } else {
+                            root.currentLyric = "Lyrics not found 🥲";
+                        }
                     }
                 } else {
                     root.isPlaying = false;
+                    root.isLoading = false;
+                    loadTimer.stop();
+
                     if (root.isKnownMusic) {
                         root.currentLyric = "Music paused";
                     } else {
