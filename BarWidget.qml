@@ -21,7 +21,7 @@ Item {
     property bool hideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? true
     property string customFontFamily: pluginApi?.pluginSettings?.fontFamily ?? Settings.data.ui.fontDefault
 
-    visible: !hideWhenEmpty || isPlaying || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
+    visible: !hideWhenEmpty || (lyricText !== "No Lyrics" && lyricText !== "")
 
     property bool hovered: false
     property real scaling: 1.0

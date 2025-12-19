@@ -7,45 +7,53 @@ Item {
     id: root
 
     property var pluginApi: null
-    property string currentLyric: "No lyrics"
     property string lastLyric: ""
-    property bool isPlaying: false
     property bool isKnownMusic: false
     property string lastTitle: ""
     property string lastPlayer: ""
     property bool manualRestart: false
     property bool isLoading: false
+    property string playStatus: "Stopped"
+
+    property string currentLyric: {
+        if (playStatus === "Stopped" || playStatus === "")
+            return "No Lyrics";
+        if (playStatus === "Paused")
+            return isKnownMusic ? "Music paused" : "No Lyrics";
+
+        if (isLoading)
+            return "Wait Loading 🪿";
+        if (!isKnownMusic)
+            return "No Lyrics";
+        if (lastLyric !== "")
+            return lastLyric;
+
+        return "Lyrics not found 🥲";
+    }
 
     Timer {
         id: loadTimer
         interval: 5000
         repeat: false
-        onTriggered: {
-            root.isLoading = false;
-            if (root.isPlaying) {
-                root.currentLyric = "Lyrics not found 🥲";
-            }
-        }
+        onTriggered: root.isLoading = false
     }
 
     Process {
         id: sptlrxProc
-        command: ["sptlrx", "-p", "mpris", "pipe"]
+        command: ["stdbuf", "-oL", "sptlrx", "-p", "mpris", "pipe"]
         running: true
 
         stdout: SplitParser {
             onRead: data => {
                 const cleanText = data.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "").trim();
 
+                if (!root.isKnownMusic)
+                    return;
+
                 if (cleanText !== "") {
                     loadTimer.stop();
                     root.isLoading = false;
-                    root.isKnownMusic = true;
                     root.lastLyric = cleanText;
-
-                    if (root.isPlaying) {
-                        root.currentLyric = cleanText;
-                    }
                 }
             }
         }
@@ -80,17 +88,20 @@ Item {
                 const artist = parts[2] || "";
                 const title = parts[3] || "";
 
-                if (status === "" || status === "Stopped") {
-                    root.isPlaying = false;
+                root.playStatus = status;
+
+                if (!status || status === "Stopped") {
                     root.isLoading = false;
                     loadTimer.stop();
-                    root.currentLyric = "No lyrics";
                     return;
                 }
 
                 if (root.lastPlayer !== "" && root.lastPlayer !== playerName) {
                     root.manualRestart = true;
                     sptlrxProc.running = false;
+
+                    root.lastTitle = "";
+                    root.lastLyric = "";
                 }
                 root.lastPlayer = playerName;
 
@@ -99,31 +110,18 @@ Item {
                     root.isKnownMusic = (artist.trim() !== "");
                     root.lastLyric = "";
 
-                    root.isLoading = true;
-                    root.currentLyric = "Wait Loading 🪿";
-                    loadTimer.restart();
+                    if (root.isKnownMusic) {
+                        root.isLoading = true;
+                        loadTimer.restart();
+                    } else {
+                        root.isLoading = false;
+                        loadTimer.stop();
+                    }
                 }
 
-                if (status === "Playing") {
-                    root.isPlaying = true;
-
-                    if (!root.isLoading) {
-                        if (root.isKnownMusic && root.lastLyric !== "") {
-                            root.currentLyric = root.lastLyric;
-                        } else {
-                            root.currentLyric = "Lyrics not found 🥲";
-                        }
-                    }
-                } else {
-                    root.isPlaying = false;
+                if (status !== "Playing") {
                     root.isLoading = false;
                     loadTimer.stop();
-
-                    if (root.isKnownMusic) {
-                        root.currentLyric = "Music paused";
-                    } else {
-                        root.currentLyric = "No lyrics";
-                    }
                 }
             }
         }
