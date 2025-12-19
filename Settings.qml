@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import qs.Services.System
 
 ColumnLayout {
     id: root
@@ -12,6 +13,7 @@ ColumnLayout {
     property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
     property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 10
     property bool draftHideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? true
+    property string draftFontFamily: pluginApi?.pluginSettings?.fontFamily ?? "Inter"
 
     spacing: Style.marginM
 
@@ -22,8 +24,25 @@ ColumnLayout {
             pluginApi.pluginSettings.scrollMode = draftMode;
             pluginApi.pluginSettings.fontSize = draftFontSize;
             pluginApi.pluginSettings.hideWhenEmpty = draftHideWhenEmpty;
+            // Save the selected font
+            pluginApi.pluginSettings.fontFamily = draftFontFamily;
             pluginApi.saveSettings();
         }
+    }
+
+    NSearchableComboBox {
+        label: "Font Family"
+        description: "Select the font for lyrics."
+        Layout.fillWidth: true
+
+        model: FontService.availableFonts
+
+        currentKey: draftFontFamily
+        placeholder: "Select a font..."
+        searchPlaceholder: "Search fonts..."
+        popupHeight: 300
+
+        onSelected: key => draftFontFamily = key
     }
 
     NLabel {

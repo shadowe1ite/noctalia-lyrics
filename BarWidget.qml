@@ -19,6 +19,7 @@ Item {
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
     property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 10
     property bool hideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? true
+    property string customFontFamily: pluginApi?.pluginSettings?.fontFamily ?? Settings.data.ui.fontDefault
 
     visible: !hideWhenEmpty || isPlaying || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
 
@@ -100,7 +101,7 @@ Item {
                     textColor: Color.mOnSurface
 
                     fontSize: root.customFontSize * scaling
-                    fontFamily: Settings.data.ui.fontDefault
+                    fontFamily: root.customFontFamily
 
                     mode: root.scrollMode
                     speed: root.scrollSpeed
@@ -144,7 +145,7 @@ Item {
         text: root.lyricText
         applyUiScale: false
         pointSize: root.customFontSize * scaling
-        family: Settings.data.ui.fontDefault
+        family: root.customFontFamily
         font.weight: Style.fontWeightMedium
     }
 
