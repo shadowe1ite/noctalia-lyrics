@@ -9,31 +9,26 @@ import qs.Services.UI
 Item {
     id: root
 
-    // Plugin Connection
     property var pluginApi: null
     property var backend: pluginApi?.mainInstance
     property string lyricText: backend?.currentLyric || "No Lyrics"
+    property bool isPlaying: backend?.isPlaying ?? false
 
-    // Settings
     property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 215
     property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 70
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
     property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 9
     property bool hideWhenEmpty: pluginApi?.pluginSettings?.hideWhenEmpty ?? false
 
-    // Visibility Logic
-    visible: !hideWhenEmpty || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
+    visible: !hideWhenEmpty || isPlaying || (lyricText !== "No Lyrics" && lyricText !== "No lyrics" && lyricText !== "Lyrics not found" && lyricText !== "No synced lyrics" && lyricText !== "Waiting for music..." && lyricText !== "")
 
-    // Visual Properties
     property bool hovered: false
     property real scaling: 1.0
 
-    // Dimensions
     readonly property int iconSize: Math.round(18 * scaling)
     readonly property int verticalSize: Math.round((Style.baseWidgetSize - 5) * scaling)
     readonly property bool isVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
 
-    // Layout
     implicitWidth: visible ? (isVertical ? verticalSize : container.width) : 0
     implicitHeight: visible ? (isVertical ? verticalSize : Style.capsuleHeight) : 0
 
@@ -114,7 +109,6 @@ Item {
             }
         }
 
-        // Vertical Fallback
         Item {
             visible: isVertical
             anchors.centerIn: parent
@@ -144,7 +138,6 @@ Item {
         }
     }
 
-    // Hidden text for width calculation
     NText {
         id: titleMetrics
         visible: false
@@ -155,9 +148,6 @@ Item {
         font.weight: Style.fontWeightMedium
     }
 
-    // ---------------------------------------------------------
-    // Scrolling Text Component with Transition
-    // ---------------------------------------------------------
     component ScrollingText: Item {
         id: scrollText
         property string text
@@ -184,6 +174,16 @@ Item {
                 return;
             }
             transitionAnim.restart();
+        }
+
+        onNeedsScrollChanged: {
+            if (!needsScroll) {
+                isScrolling = false;
+                isResetting = false;
+                scrollTimer.stop();
+            } else {
+                updateState();
+            }
         }
 
         SequentialAnimation {
@@ -221,7 +221,7 @@ Item {
 
         Timer {
             id: scrollTimer
-            interval: 1000
+            interval: 700
             onTriggered: {
                 if (mode === "always" && needsScroll) {
                     scrollText.isScrolling = true;
