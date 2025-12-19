@@ -7,9 +7,11 @@ ColumnLayout {
     id: root
     property var pluginApi: null
 
+    // Load settings
     property int draftWidth: pluginApi?.pluginSettings?.widgetWidth ?? 300
     property int draftSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 50
     property string draftMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
+    property int draftFontSize: pluginApi?.pluginSettings?.fontSize ?? 14
 
     spacing: Style.marginM
 
@@ -18,15 +20,42 @@ ColumnLayout {
             pluginApi.pluginSettings.widgetWidth = draftWidth;
             pluginApi.pluginSettings.scrollSpeed = draftSpeed;
             pluginApi.pluginSettings.scrollMode = draftMode;
+
+            // Only saving Font Size now
+            pluginApi.pluginSettings.fontSize = draftFontSize;
+
             pluginApi.saveSettings();
         }
     }
 
+    // --- Font Size ---
     NLabel {
-        label: "Widget Width"
-        description: "Width of the lyrics bar widget in pixels."
+        label: "Font Size"
+        description: "Text size in points."
     }
 
+    RowLayout {
+        Layout.fillWidth: true
+        NSlider {
+            Layout.fillWidth: true
+            from: 8
+            to: 32
+            value: draftFontSize
+            onValueChanged: draftFontSize = value
+        }
+        NText {
+            text: Math.round(draftFontSize) + "pt"
+        }
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+    }
+
+    // --- Widget Width ---
+    NLabel {
+        label: "Widget Width"
+    }
     RowLayout {
         Layout.fillWidth: true
         NSlider {
@@ -41,11 +70,10 @@ ColumnLayout {
         }
     }
 
+    // --- Scroll Speed ---
     NLabel {
         label: "Scroll Speed"
-        description: "Speed of the marquee animation (pixels/sec)."
     }
-
     RowLayout {
         Layout.fillWidth: true
         NSlider {
@@ -60,9 +88,9 @@ ColumnLayout {
         }
     }
 
+    // --- Scroll Mode ---
     NComboBox {
         label: "Scroll Mode"
-        description: "When should the lyrics scroll?"
         Layout.fillWidth: true
         model: [
             {

@@ -6,86 +6,318 @@ import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
-Rectangle {
+Item {
     id: root
 
+    // Plugin Connection
     property var pluginApi: null
     property var backend: pluginApi?.mainInstance
     property string lyricText: backend?.currentLyric || "No Lyrics"
 
+    // Settings
     property int widgetWidth: pluginApi?.pluginSettings?.widgetWidth ?? 300
     property int scrollSpeed: pluginApi?.pluginSettings?.scrollSpeed ?? 50
     property string scrollMode: pluginApi?.pluginSettings?.scrollMode ?? "always"
+    property int customFontSize: pluginApi?.pluginSettings?.fontSize ?? 14
 
+    // Visual Properties
     property bool hovered: false
+    property real scaling: 1.0
 
-    implicitWidth: widgetWidth
-    implicitHeight: Style.capsuleHeight
+    // Dimensions
+    readonly property int iconSize: Math.round(18 * scaling)
+    readonly property int verticalSize: Math.round((Style.baseWidgetSize - 5) * scaling)
+    readonly property bool isVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
 
-    height: Style.capsuleHeight
-    width: widgetWidth
-    radius: Style.radiusM
-    color: Style.capsuleColor
-    clip: true
+    // Layout
+    implicitWidth: visible ? (isVertical ? verticalSize : container.width) : 0
+    implicitHeight: visible ? (isVertical ? verticalSize : Style.capsuleHeight) : 0
 
-    border.width: Style.capsuleBorderWidth
-    border.color: Style.capsuleBorderColor
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: Style.animationNormal
+            easing.type: Easing.InOutCubic
+        }
+    }
+    Behavior on implicitHeight {
+        NumberAnimation {
+            duration: Style.animationNormal
+            easing.type: Easing.InOutCubic
+        }
+    }
 
-    Item {
-        id: textContainer
-        anchors.fill: parent
-        anchors.margins: Style.marginS
+    Rectangle {
+        id: container
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+
+        width: isVertical ? verticalSize : root.widgetWidth
+        height: isVertical ? verticalSize : Style.capsuleHeight
+
+        radius: Style.radiusM
+        color: Style.capsuleColor
+        border.width: Style.capsuleBorderWidth
+        border.color: Style.capsuleBorderColor
         clip: true
 
-        NText {
-            id: label
-            text: root.lyricText
-            font.pixelSize: Style.fontSizeM
-            color: root.hovered ? Color.mOnHover : Color.mOnSurface
-            verticalAlignment: Text.AlignVCenter
+        Behavior on width {
+            NumberAnimation {
+                duration: Style.animationNormal
+                easing.type: Easing.InOutCubic
+            }
+        }
+        Behavior on height {
+            NumberAnimation {
+                duration: Style.animationNormal
+                easing.type: Easing.InOutCubic
+            }
+        }
 
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 200
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: isVertical ? 0 : Style.marginS * scaling
+            spacing: Style.marginS * scaling
+            visible: !isVertical
+
+            NIcon {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: iconSize
+                Layout.preferredHeight: iconSize
+                icon: "music"
+                color: root.hovered ? Color.mPrimary : Color.mOnSurfaceVariant
+                pointSize: Style.fontSizeL * scaling
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+
+                ScrollingText {
+                    anchors.fill: parent
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    text: root.lyricText
+                    textColor: Color.mOnSurface
+
+                    fontSize: root.customFontSize * scaling
+                    fontFamily: Settings.data.ui.fontDefault
+
+                    mode: root.scrollMode
+                    speed: root.scrollSpeed
+                    needsScroll: titleMetrics.contentWidth > parent.width
                 }
             }
+        }
 
-            onTextChanged: {
-                opacity = 0;
-                opacity = 1;
-                if (anim.running)
-                    anim.restart();
+        // Vertical Fallback
+        Item {
+            visible: isVertical
+            anchors.centerIn: parent
+            width: parent.width
+            height: parent.height
+
+            NIcon {
+                anchors.centerIn: parent
+                icon: "music"
+                color: root.hovered ? Color.mPrimary : Color.mOnSurfaceVariant
+                pointSize: Style.fontSizeM * scaling
             }
+        }
 
-            NumberAnimation on x {
-                id: anim
-                from: 0
-                to: -label.contentWidth + textContainer.width
-                duration: Math.max(1000, (label.contentWidth / Math.max(1, root.scrollSpeed)) * 1000)
-                running: {
-                    if (label.contentWidth <= textContainer.width)
-                        return false;
-                    if (root.scrollMode === "none")
-                        return false;
-                    if (root.scrollMode === "hover" && !root.hovered)
-                        return false;
-                    return true;
-                }
-                loops: Animation.Infinite
-                easing.type: Easing.Linear
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: {
+                root.hovered = true;
+                if (isVertical)
+                    TooltipService.show(root, root.lyricText, "right");
             }
-
-            onXChanged: {
-                if (!anim.running)
-                    x = 0;
+            onExited: {
+                root.hovered = false;
+                TooltipService.hide();
             }
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onEntered: root.hovered = true
-        onExited: root.hovered = false
+    // Hidden text for width calculation
+    NText {
+        id: titleMetrics
+        visible: false
+        text: root.lyricText
+        applyUiScale: false
+        pointSize: root.customFontSize * scaling
+        family: Settings.data.ui.fontDefault
+        font.weight: Style.fontWeightMedium
+    }
+
+    // ---------------------------------------------------------
+    // Scrolling Text Component with Transition
+    // ---------------------------------------------------------
+    component ScrollingText: Item {
+        id: scrollText
+        property string text
+        property string _displayedText: "" // Internal text for smooth updates
+        property color textColor
+        property real fontSize
+        property string fontFamily
+        property string mode
+        property int speed
+        property bool needsScroll
+
+        implicitHeight: titleText.height
+        clip: true
+        opacity: 1.0 // Start fully visible
+
+        property bool isScrolling: false
+        property bool isResetting: false
+
+        // Handle Text Changes Smoothly
+        onTextChanged: {
+            // First run: set immediately
+            if (_displayedText === "") {
+                _displayedText = text;
+                if (needsScroll && mode === "always")
+                    scrollTimer.restart();
+                return;
+            }
+            // Subsequent changes: Animate
+            transitionAnim.restart();
+        }
+
+        // Transition Animation
+        SequentialAnimation {
+            id: transitionAnim
+
+            // 1. Fade Out (Fast)
+            NumberAnimation {
+                target: scrollText
+                property: "opacity"
+                to: 0
+                duration: 150
+                easing.type: Easing.OutQuad
+            }
+
+            // 2. Update Text & Reset Scroll Position
+            ScriptAction {
+                script: {
+                    scrollText._displayedText = scrollText.text;
+                    scrollText.isScrolling = false;
+                    scrollText.isResetting = false;
+                    scrollContainer.scrollX = 0;
+                }
+            }
+
+            // 3. Fade In (Fast)
+            NumberAnimation {
+                target: scrollText
+                property: "opacity"
+                to: 1
+                duration: 200
+                easing.type: Easing.InQuad
+            }
+
+            // 4. Restart Scrolling if needed
+            ScriptAction {
+                script: {
+                    if (scrollText.needsScroll && scrollText.mode === "always") {
+                        scrollTimer.restart();
+                    }
+                }
+            }
+        }
+
+        Timer {
+            id: scrollTimer
+            interval: 1000
+            onTriggered: {
+                if (mode === "always" && needsScroll) {
+                    scrollText.isScrolling = true;
+                    scrollText.isResetting = false;
+                }
+            }
+        }
+
+        function updateState() {
+            if (mode === "none") {
+                isScrolling = false;
+                isResetting = false;
+            } else if (mode === "always") {
+                if (needsScroll) {
+                    if (root.hovered) {
+                        isScrolling = false;
+                        isResetting = true;
+                    } else {
+                        // Only restart if we aren't currently transitioning
+                        if (!transitionAnim.running)
+                            scrollTimer.restart();
+                    }
+                } else {
+                    isScrolling = false;
+                }
+            } else if (mode === "hover") {
+                isScrolling = root.hovered && needsScroll;
+                isResetting = !root.hovered && needsScroll;
+            }
+        }
+
+        onWidthChanged: updateState()
+        Connections {
+            target: root
+            function onHoveredChanged() {
+                scrollText.updateState();
+            }
+        }
+        onModeChanged: updateState()
+
+        Item {
+            id: scrollContainer
+            height: parent.height
+            property real scrollX: 0
+            x: scrollX
+
+            RowLayout {
+                spacing: 50
+
+                NText {
+                    id: titleText
+                    // Bind to the internal displayed text, not the raw input
+                    text: scrollText._displayedText
+                    color: textColor
+                    pointSize: fontSize
+                    family: scrollText.fontFamily
+                    applyUiScale: false
+                    font.weight: Style.fontWeightMedium
+                }
+
+                NText {
+                    // Bind to the internal displayed text
+                    text: scrollText._displayedText
+                    color: textColor
+                    pointSize: fontSize
+                    family: scrollText.fontFamily
+                    applyUiScale: false
+                    font.weight: Style.fontWeightMedium
+                    visible: scrollText.needsScroll && scrollText.isScrolling
+                }
+            }
+
+            NumberAnimation on scrollX {
+                running: scrollText.isResetting
+                to: 0
+                duration: 300
+                easing.type: Easing.OutQuad
+                onFinished: scrollText.isResetting = false
+            }
+
+            NumberAnimation on scrollX {
+                running: scrollText.isScrolling && !scrollText.isResetting
+                from: 0
+                to: -(titleMetrics.contentWidth + 50)
+                duration: Math.max(1000, ((titleMetrics.contentWidth + 50) / Math.max(1, scrollText.speed)) * 1000)
+                loops: Animation.Infinite
+                easing.type: Easing.Linear
+            }
+        }
     }
 }

@@ -12,7 +12,7 @@ Item {
     // Process to run sptlrx in pipe mode
     Process {
         id: sptlrxProc
-        command: ["sptlrx", "pipe"]
+        command: ["sptlrx", "-p", "mpris", "pipe"]
         running: true
 
         stdout: SplitParser {
