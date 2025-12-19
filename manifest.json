@@ -20,7 +20,7 @@
       "scrollSpeed": 50,
       "fontSize": 9,
       "scrollMode": "always",
-      "hideWhenEmpty": false
+      "hideWhenEmpty": true
     }
   }
 }
